@@ -1,5 +1,10 @@
 package me.shreyasr.chatse.chat;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -7,6 +12,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -37,6 +43,7 @@ import me.shreyasr.chatse.chat.service.IncomingEventListener;
 import me.shreyasr.chatse.event.ChatEvent;
 import me.shreyasr.chatse.event.ChatEventGenerator;
 import me.shreyasr.chatse.event.EventList;
+import me.shreyasr.chatse.event.presenter.message.MessageEvent;
 import me.shreyasr.chatse.network.Client;
 import me.shreyasr.chatse.network.ClientManager;
 import me.shreyasr.chatse.util.Logger;
@@ -136,8 +143,18 @@ public class ChatFragment extends Fragment implements IncomingEventListener {
         if (room == null || events == null) return;
         for (JsonNode jsonEvent : jsonEvents) {
             ChatEvent newEvent = chatEventGenerator.createEvent(jsonEvent);
-            if (newEvent.room_id == room.num) {
+            if (newEvent != null && newEvent.room_id == room.num) {
                 events.addEvent(newEvent);
+            }
+            if (newEvent != null && newEvent.event_type == ChatEvent.EVENT_TYPE_MESSAGE) {
+                MessageEvent messageEvent = new MessageEvent(newEvent);
+                Notification n = new NotificationCompat.Builder(this.getActivity())
+                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setContentTitle("New Message")
+                        .setContentText(messageEvent.content)
+                        .setContentIntent(PendingIntent.getActivity(this.getActivity(), 0, new Intent(this.getActivity(), ChatActivity.class), 0))
+                        .build();
+                ((NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE)).notify(2, n);
             }
         }
         uiThreadHandler.post(new Runnable() {

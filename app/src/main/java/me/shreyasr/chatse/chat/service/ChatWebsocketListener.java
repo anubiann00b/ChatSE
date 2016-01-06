@@ -34,7 +34,7 @@ public class ChatWebsocketListener implements WebSocketListener {
     @Override public void onFailure(IOException e, Response response) {
         Logger.event(this.getClass(), "websocket fail: " + site);
         listener.onConnect(site, false);
-        Log.e(e.getClass().getSimpleName(), e.getMessage(), e);
+        Log.e(e.getClass().getSimpleName(), e.getMessage(), e); 
     }
 
     @Override public void onMessage(BufferedSource payload,

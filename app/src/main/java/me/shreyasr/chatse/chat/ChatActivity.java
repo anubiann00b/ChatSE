@@ -32,12 +32,14 @@ public class ChatActivity extends AppCompatActivity implements ServiceConnection
     private Handler uiThreadHandler = new Handler(Looper.getMainLooper());
     ChatFragmentPagerAdapter pagerAdapter;
     ViewPager viewPager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.activity_chat);
 
         Intent serviceIntent = new Intent(this, IncomingEventService.class);
+        this.startService(serviceIntent);
         this.bindService(serviceIntent, this, Context.BIND_AUTO_CREATE);
 
         HandlerThread handlerThread = new HandlerThread("ChatActivityNetworkHandlerThread");
@@ -55,6 +57,8 @@ public class ChatActivity extends AppCompatActivity implements ServiceConnection
 
         loadChatFragment(new ChatRoom(Client.SITE_STACK_EXCHANGE, 1));
         loadChatFragment(new ChatRoom(Client.SITE_STACK_OVERFLOW, 15));
+        loadChatFragment(new ChatRoom(Client.SITE_STACK_EXCHANGE, 16));
+        loadChatFragment(new ChatRoom(Client.SITE_STACK_EXCHANGE, 201));
     }
 
     @Override public void onServiceDisconnected(ComponentName name) {

@@ -15,7 +15,7 @@ public class ChatEventGenerator {
         try {
             return mapper.readValue(json, ChatEvent.class);
         } catch (IOException e) {
-            Logger.exception(this.getClass(), "Failed to map json", e);
+            Logger.exception(this.getClass(), "Failed to map json: " + json.toString(), e);
         }
         return null;
     }

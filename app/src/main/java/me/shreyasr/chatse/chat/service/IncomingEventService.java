@@ -1,8 +1,14 @@
 package me.shreyasr.chatse.chat.service;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.squareup.okhttp.FormEncodingBuilder;
@@ -23,6 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import me.shreyasr.chatse.R;
+import me.shreyasr.chatse.chat.ChatActivity;
 import me.shreyasr.chatse.chat.ChatRoom;
 import me.shreyasr.chatse.network.Client;
 import me.shreyasr.chatse.util.Logger;
@@ -33,15 +41,39 @@ public class IncomingEventService extends Service
     private static final String TAG = IncomingEventService.class.getSimpleName();
     private List<MessageListenerHolder> listeners = new ArrayList<>();
 
+    protected BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Logger.event(getClass(), "stopping self");
+            stopSelf();
+        }
+    };
+
     public IncomingEventService() { }
 
-    @Override
-    public IBinder onBind(Intent intent) {
+    @Override public int onStartCommand(Intent intent, int flags, int startId) {
+        registerReceiver(stopServiceReceiver, new IntentFilter("myFilter"));
+        PendingIntent stopServiceIntent = PendingIntent.getBroadcast(this, 0, new Intent("myFilter"), PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Notification n = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("ChatSE")
+                .setContentText("ChatSE is running in the background.")
+                .setWhen(0)
+                .setPriority(NotificationCompat.PRIORITY_MIN)
+                .setContentIntent(getPendingActivityIntent())
+                .addAction(R.drawable.ic_close_black_18dp, "Close", stopServiceIntent)
+                .setOngoing(true)
+                .build();
+        startForeground(1, n);
+        return START_NOT_STICKY;
+    }
+
+    @Override public IBinder onBind(Intent intent) {
         return new IncomingEventServiceBinder(this);
     }
 
-    @Override
-    public void onDestroy() {
+    @Override public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy");
     }
@@ -59,6 +91,11 @@ public class IncomingEventService extends Service
             this.room = room;
             this.listener = listener;
         }
+    }
+
+    private PendingIntent getPendingActivityIntent() {
+        Intent activityIntent = new Intent(this, ChatActivity.class);
+        return PendingIntent.getActivity(this, 0, activityIntent, 0);
     }
 
     @Override public void onNewEvents(String site, JsonNode message) {
